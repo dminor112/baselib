@@ -1,12 +1,12 @@
-package com.dminor.baselib.jedis;
+package com.dminor.baselib.jedis.impl;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -14,75 +14,70 @@ import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
-import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
 
-/**
- * redis数据库包装 单例
- * liwenlin
- */
-public class JRedis {
+public class SRedis {
 
-	private static final int TEST_DB_NUM = 9;
-
-	private static final String AUTH_PWD = "0315509d66c1db1f";
-//	static final String AUTH_PWD = "sdet_redis_qwe123!";
-	private static int DB_NUM = TEST_DB_NUM;
-	private static int DB_TIMEOUT = 2000;
-	private static String WRITE_HOST;
-	private static String READ_HOST;
-	private static JedisPoolConfig POOL_CONFIG;
+//	private static final int TEST_DB_NUM = 9;
+//
+//	private static final String AUTH_PWD = "0315509d66c1db1f";
+////	static final String AUTH_PWD = "sdet_redis_qwe123!";
+//	private static int DB_NUM = TEST_DB_NUM;
+//	private static int DB_TIMEOUT = 2000;
+//	private static String WRITE_HOST;
+//	private static String READ_HOST;
+//	private static JedisPoolConfig POOL_CONFIG;
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(JRedis.class);
-
-	private static class SingletonHandler{
-		private static JRedis instance = new JRedis();
-	}
-
-	public static JRedis getInstance() {
-		if (SingletonHandler.instance == null) {
-			throw new Error(
-					"Connect to redis error. Please initJRedisConfig first or check the init parameters.");
-		}
-		return SingletonHandler.instance;
-	}
-
-	/**
-	 * 初始化数据库信息，传入读库和写库的host
-	 * @param writeHost
-	 * @param readHost
-	 * @param timeout
-	 * @param dbnum
-	 * @param poolconfig
-	 */
-	public static void initJRedisConfig(String writeHost, String readHost,
-			int timeout, int dbnum, JedisPoolConfig poolconfig) {
-		DB_TIMEOUT = timeout;
-		DB_NUM = dbnum;
-		WRITE_HOST = writeHost;
-		READ_HOST = readHost;
-		POOL_CONFIG = poolconfig;
-//		_redis = new JRedis(writeHost, readHost, poolconfig);
-	}
+//
+//	private static class SingletonHandler{
+//		private static JRedis instance = new JRedis();
+//	}
+//
+//	public static JRedis getInstance() {
+//		if (SingletonHandler.instance == null) {
+//			throw new Error(
+//					"Connect to redis error. Please initJRedisConfig first or check the init parameters.");
+//		}
+//		return SingletonHandler.instance;
+//	}
+//
+//	/**
+//	 * 初始化数据库信息，传入读库和写库的host
+//	 * @param writeHost
+//	 * @param readHost
+//	 * @param timeout
+//	 * @param dbnum
+//	 * @param poolconfig
+//	 */
+//	public static void initJRedisConfig(String writeHost, String readHost,
+//			int timeout, int dbnum, JedisPoolConfig poolconfig) {
+//		DB_TIMEOUT = timeout;
+//		DB_NUM = dbnum;
+//		WRITE_HOST = writeHost;
+//		READ_HOST = readHost;
+//		POOL_CONFIG = poolconfig;
+////		_redis = new JRedis(writeHost, readHost, poolconfig);
+//	}
 
 	private volatile JedisPool readPool;
 	private volatile JedisPool writePool;
 
-	private JRedis() {
-		String[] temp = null;
-		String writeIp = null;
-		String readIp = null;
-		int writePort = 0;
-		int readPort = 0;
-		temp = WRITE_HOST.split(":");
-		writeIp = temp[0];
-		writePort = Integer.valueOf(temp[1]);
-		temp = READ_HOST.split(":");
-		readIp = temp[0];
-		readPort = Integer.valueOf(temp[1]);
-
-		System.out.println("====, " + DB_NUM);
-		readPool = new JedisPool(POOL_CONFIG, readIp, readPort, DB_TIMEOUT, null, DB_NUM);
-		writePool = new JedisPool(POOL_CONFIG, writeIp, writePort, DB_TIMEOUT, null, DB_NUM);
+	public void SRedis(JedisPoolConfig poolConfig, String readIp, int readPort, String writeIp, int writePort, int dbTimeout, int dbNum) {
+//		String[] temp = null;
+//		String writeIp = null;
+//		String readIp = null;
+//		int writePort = 0;
+//		int readPort = 0;
+//		temp = WRITE_HOST.split(":");
+//		writeIp = temp[0];
+//		writePort = Integer.valueOf(temp[1]);
+//		temp = READ_HOST.split(":");
+//		readIp = temp[0];
+//		readPort = Integer.valueOf(temp[1]);
+//
+//		System.out.println("====, " + DB_NUM);
+		readPool = new JedisPool(poolConfig, readIp, readPort, dbTimeout, null, dbNum);
+		writePool = new JedisPool(poolConfig, writeIp, writePort, dbTimeout, null, dbNum);
 		
 //		readPool = new JedisPool(POOL_CONFIG, readIp, readPort, DB_TIMEOUT);
 //		writePool = new JedisPool(POOL_CONFIG, writeIp, writePort, DB_TIMEOUT);
@@ -106,7 +101,7 @@ public class JRedis {
 	private Jedis getWriteInstance() {
 		Jedis handle = writeThreadlocal.get();
 		if (handle == null) {
-			writeThreadlocal.set(JRedis.getInstance().getWritePool().getResource());
+			writeThreadlocal.set(writePool.getResource());
 		}
 		return writeThreadlocal.get();
 	}
@@ -118,7 +113,7 @@ public class JRedis {
 	private Jedis getReadInstance() {
 		Jedis handle = readThreadlocal.get();
 		if (handle == null) {
-			readThreadlocal.set(JRedis.getInstance().getReadPool().getResource());
+			readThreadlocal.set(readPool.getResource());
 		}
 		return readThreadlocal.get();
 	}
@@ -210,7 +205,7 @@ public class JRedis {
 				//确保归还连接，不要泄漏
 				if(returnIns){
 					if (null != writeThreadlocal.get()) {
-						JRedis.getInstance().getWritePool().returnResource(writeThreadlocal.get());
+						writePool.returnResource(writeThreadlocal.get());
 						writeThreadlocal.remove();
 					}
 				}
@@ -224,7 +219,7 @@ public class JRedis {
 	 */
 	public void returnJedisIntance(){
 		if (null != writeThreadlocal.get()) {
-			JRedis.getInstance().getWritePool().returnResource(writeThreadlocal.get());
+			writePool.returnResource(writeThreadlocal.get());
 			writeThreadlocal.remove();
 		}
 	}
@@ -270,7 +265,7 @@ public class JRedis {
 			} finally {
 				//确保归还连接，不要泄漏
 				if (null != readThreadlocal.get()) {
-					JRedis.getInstance().getReadPool().returnResource(readThreadlocal.get());
+					readPool.returnResource(readThreadlocal.get());
 					readThreadlocal.remove();
 				}
 			}
