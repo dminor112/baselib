@@ -17,70 +17,15 @@ import redis.clients.jedis.exceptions.JedisDataException;
 
 public class SRedis {
 
-//	private static final int TEST_DB_NUM = 9;
-//
-//	private static final String AUTH_PWD = "0315509d66c1db1f";
-////	static final String AUTH_PWD = "sdet_redis_qwe123!";
-//	private static int DB_NUM = TEST_DB_NUM;
-//	private static int DB_TIMEOUT = 2000;
-//	private static String WRITE_HOST;
-//	private static String READ_HOST;
-//	private static JedisPoolConfig POOL_CONFIG;
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(JRedis.class);
-//
-//	private static class SingletonHandler{
-//		private static JRedis instance = new JRedis();
-//	}
-//
-//	public static JRedis getInstance() {
-//		if (SingletonHandler.instance == null) {
-//			throw new Error(
-//					"Connect to redis error. Please initJRedisConfig first or check the init parameters.");
-//		}
-//		return SingletonHandler.instance;
-//	}
-//
-//	/**
-//	 * 初始化数据库信息，传入读库和写库的host
-//	 * @param writeHost
-//	 * @param readHost
-//	 * @param timeout
-//	 * @param dbnum
-//	 * @param poolconfig
-//	 */
-//	public static void initJRedisConfig(String writeHost, String readHost,
-//			int timeout, int dbnum, JedisPoolConfig poolconfig) {
-//		DB_TIMEOUT = timeout;
-//		DB_NUM = dbnum;
-//		WRITE_HOST = writeHost;
-//		READ_HOST = readHost;
-//		POOL_CONFIG = poolconfig;
-////		_redis = new JRedis(writeHost, readHost, poolconfig);
-//	}
 
 	private volatile JedisPool readPool;
 	private volatile JedisPool writePool;
 
-	public void SRedis(JedisPoolConfig poolConfig, String readIp, int readPort, String writeIp, int writePort, int dbTimeout, int dbNum) {
-//		String[] temp = null;
-//		String writeIp = null;
-//		String readIp = null;
-//		int writePort = 0;
-//		int readPort = 0;
-//		temp = WRITE_HOST.split(":");
-//		writeIp = temp[0];
-//		writePort = Integer.valueOf(temp[1]);
-//		temp = READ_HOST.split(":");
-//		readIp = temp[0];
-//		readPort = Integer.valueOf(temp[1]);
-//
-//		System.out.println("====, " + DB_NUM);
+	public SRedis(JedisPoolConfig poolConfig, String readIp, int readPort, String writeIp, int writePort, int dbTimeout, int dbNum) {
 		readPool = new JedisPool(poolConfig, readIp, readPort, dbTimeout, null, dbNum);
 		writePool = new JedisPool(poolConfig, writeIp, writePort, dbTimeout, null, dbNum);
-		
-//		readPool = new JedisPool(POOL_CONFIG, readIp, readPort, DB_TIMEOUT);
-//		writePool = new JedisPool(POOL_CONFIG, writeIp, writePort, DB_TIMEOUT);
 	}
 
 	private JedisPool getReadPool() {
@@ -125,47 +70,6 @@ public class SRedis {
 	 */
 	private <T> T writeFuncWrapper(Callable<T> c) {
 		return writeFuncWrapper(c, true);
-//		T result = null;
-//		final int RETRY_LIMIT = 3;
-//		for (int iRetry=0; iRetry<RETRY_LIMIT; iRetry++)
-//		{
-//			try{
-//				//执行数据库操作
-//				result = c.call();
-//				//执行成功，没抛异常，就break到外面去返回结果
-//				break;
-//			} catch(JedisConnectionException e) {
-//				//连接异常，说明这个连接挂了，尝试重试一下
-//				if (iRetry<(RETRY_LIMIT-1)) {
-//					//还没到重试极限，销毁当前连接进行重试
-//					Jedis handle = writeThreadlocal.get();
-//					if (handle != null) {
-//						//redis没有关闭连接的接口，这里只能指望超时机制回收掉这个已经坏了的连接了
-//						//销毁本地的连接引用，这样下一轮会重新取一个新的连接，这事儿就算是重连了。
-//						writeThreadlocal.remove();
-//					}
-//				} else {
-//					//重试极限到了，没办法，抛异常
-//					throw e;
-//				}
-//			} catch(JedisDataException e) {
-//				//数据问题，继续抛出吧，业务层逻辑有问题
-//				throw e;
-//			} catch(RuntimeException e) {
-//				//其他运行时异常，照抛
-//				throw e;
-//			} catch(Exception e) {
-//				//奇葩的异常
-//				throw new RuntimeException(e);
-//			} finally {
-//				//确保归还连接，不要泄漏
-//				if (null != writeThreadlocal.get()) {
-//					JRedis.getInstance().getWritePool().returnResource(writeThreadlocal.get());
-//					writeThreadlocal.remove();
-//				}
-//			}
-//		}
-//		return result;
 	}
 	
 	private <T> T writeFuncWrapper(Callable<T> c, boolean returnIns) {
@@ -205,7 +109,8 @@ public class SRedis {
 				//确保归还连接，不要泄漏
 				if(returnIns){
 					if (null != writeThreadlocal.get()) {
-						writePool.returnResource(writeThreadlocal.get());
+						writeThreadlocal.get().close();
+//						writePool.returnResource(writeThreadlocal.get());
 						writeThreadlocal.remove();
 					}
 				}
@@ -219,7 +124,8 @@ public class SRedis {
 	 */
 	public void returnJedisIntance(){
 		if (null != writeThreadlocal.get()) {
-			writePool.returnResource(writeThreadlocal.get());
+			writeThreadlocal.get().close();
+//			writePool.returnResource(writeThreadlocal.get());
 			writeThreadlocal.remove();
 		}
 	}
@@ -265,7 +171,8 @@ public class SRedis {
 			} finally {
 				//确保归还连接，不要泄漏
 				if (null != readThreadlocal.get()) {
-					readPool.returnResource(readThreadlocal.get());
+					readThreadlocal.get().close();
+//					readPool.returnResource(readThreadlocal.get());
 					readThreadlocal.remove();
 				}
 			}
