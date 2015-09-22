@@ -220,6 +220,16 @@ public class SRedis {
 		});
 	}
 	
+	public String setEx(final String key, final int seconds, final String value) {
+		return writeFuncWrapper(new Callable<String>() {
+
+			@Override
+			public String call() {
+				return getWriteInstance().setex(key, seconds, value);
+			}
+		});
+	}
+	
 	public Long append(final String key, final String value) {
 		return writeFuncWrapper(new Callable<Long>() {
 
