@@ -86,7 +86,10 @@ public class AESCoder extends Coder {
 	public static byte[] decrypt(byte[] content, String password) {
 		try {
 			KeyGenerator kgen = KeyGenerator.getInstance("AES");
-			kgen.init(128, new SecureRandom(password.getBytes()));
+			SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG" );
+            secureRandom.setSeed(password.getBytes());
+            kgen.init(128, secureRandom);
+//			kgen.init(128, new SecureRandom(password.getBytes()));
 			SecretKey secretKey = kgen.generateKey();
 			byte[] enCodeFormat = secretKey.getEncoded();
 			SecretKeySpec key = new SecretKeySpec(enCodeFormat, "AES");
@@ -95,15 +98,15 @@ public class AESCoder extends Coder {
 			byte[] result = cipher.doFinal(content);
 			return result; // 加密
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			logger.error("decrypt error1, {}", e);
 		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
+			logger.error("decrypt error2, {}", e);
 		} catch (InvalidKeyException e) {
-			e.printStackTrace();
+			logger.error("decrypt error3, {}", e);
 		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
+			logger.error("decrypt error4, {}", e);
 		} catch (BadPaddingException e) {
-			e.printStackTrace();
+			logger.error("decrypt error5, {}", e);
 		}
 		return null;
 	}
@@ -179,17 +182,17 @@ public class AESCoder extends Coder {
 			byte[] result = cipher.doFinal(byteContent);
 			return result; // 加密
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error1, {}", e);
 		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error2, {}", e);
 		} catch (InvalidKeyException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error3, {}", e);
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error4, {}", e);
 		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error5, {}", e);
 		} catch (BadPaddingException e) {
-			e.printStackTrace();
+			logger.error("encrypt2 error6, {}", e);
 		}
 		return null;
 	}
