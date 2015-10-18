@@ -20,6 +20,8 @@ import sun.misc.BASE64Encoder;
 public abstract class Coder {
 	public static final String KEY_SHA = "SHA";
 	public static final String KEY_MD5 = "MD5";
+	private static final BASE64Decoder base64Decoder = new BASE64Decoder();
+	private static final BASE64Encoder base64Encoder = new BASE64Encoder();
 
 	/**
 	 * MAC算法可选以下多种算法
@@ -42,7 +44,7 @@ public abstract class Coder {
 	 * @throws Exception
 	 */
 	public static byte[] decryptBASE64(String key) throws Exception {
-		return (new BASE64Decoder()).decodeBuffer(key);
+		return base64Decoder.decodeBuffer(key);
 	}
 
 	/**
@@ -53,7 +55,7 @@ public abstract class Coder {
 	 * @throws Exception
 	 */
 	public static String encryptBASE64(byte[] key) throws Exception {
-		return (new BASE64Encoder()).encodeBuffer(key);
+		return base64Encoder.encodeBuffer(key);
 	}
 
 	/**

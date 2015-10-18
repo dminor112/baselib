@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 public class BaseDao {
 
-    @Autowired
-    @Qualifier("hibernateSessionFactory")
+//    @Autowired
+//    @Qualifier("hibernateSessionFactory")
     private SessionFactory sessionFactory;
 
     public Session getSession(){
